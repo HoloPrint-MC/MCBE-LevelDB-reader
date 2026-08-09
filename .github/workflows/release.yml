@@ -26,8 +26,22 @@ jobs:
       - name: Build package
         run: npm run build
       - name: Create release PR or publish
+        id: changesets
         uses: changesets/action@v1
         with:
           publish: npm run release -- --provenance --access public
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Rename version PR with new version number
+        if: steps.changesets.outputs.published != 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PR_NUMBER=$(gh pr list \
+            --head "changeset-release/${GITHUB_REF_NAME}" \
+            --json number --jq '.[0].number')
+          if [ -n "$PR_NUMBER" ]; then
+            VERSION=$(gh api "repos/${GITHUB_REPOSITORY}/contents/package.json?ref=changeset-release/${GITHUB_REF_NAME}" \
+              --jq '.content' | base64 -d | jq -r '.version')
+            gh pr edit "$PR_NUMBER" --title "chore: Release ${VERSION}"
+          fi
