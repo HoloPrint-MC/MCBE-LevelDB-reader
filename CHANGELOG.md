@@ -1,5 +1,11 @@
 # mcbe-leveldb-reader
 
+## 3.0.2
+
+### Patch Changes
+
+- ce65152: fix: Add back property I just removed 🙄
+
 ## 3.0.1
 
 ### Patch Changes

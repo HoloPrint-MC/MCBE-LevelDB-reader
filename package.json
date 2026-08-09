@@ -1,6 +1,6 @@
 {
 	"name": "mcbe-leveldb-reader",
-	"version": "3.0.1",
+	"version": "3.0.2",
 	"description": "Reads a MCBE LevelDB database from a .mcworld file. Can also extract all structure files from a world.",
 	"keywords": [
 		"leveldb",
