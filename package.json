@@ -9,15 +9,15 @@
 		"mcworld",
 		"minecraft"
 	],
-	"homepage": "https://github.com/SuperLlama88888/MCBE-LevelDB-reader#readme",
+	"homepage": "https://github.com/HoloPrint-MC/MCBE-LevelDB-reader#readme",
 	"bugs": {
-		"url": "https://github.com/SuperLlama88888/MCBE-LevelDB-reader/issues"
+		"url": "https://github.com/HoloPrint-MC/MCBE-LevelDB-reader/issues"
 	},
 	"license": "MIT",
 	"author": "SuperLlama88888",
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/SuperLlama88888/MCBE-LevelDB-reader.git"
+		"url": "git+https://github.com/HoloPrint-MC/MCBE-LevelDB-reader.git"
 	},
 	"files": [
 		"dist"
