@@ -1,13 +1,12 @@
-import { extractStructureFilesFromMcworld } from "../dist/main.js";
 import fs from "node:fs";
 import path from "node:path";
 
+import { extractStructureFilesFromMcworld } from "../dist/index.js";
+
 async function test(db) {
-	let bytes = fs.readFileSync(path.join(import.meta.dirname, db));
-	let mcworld = new Blob([bytes])
-	// let mcworld = await fetch(import.meta.dirname + "/" + db).then(res => res.blob());
-	// console.log(mcworld)
-	console.log(await extractStructureFilesFromMcworld(mcworld));
+	const bytes = fs.readFileSync(path.join(import.meta.dirname, db));
+	const mcworld = new Blob([bytes]);
+	console.log("extractStructureFilesFromMcworld count:", (await extractStructureFilesFromMcworld(mcworld)).size);
 }
 
 await test("./world.zip");

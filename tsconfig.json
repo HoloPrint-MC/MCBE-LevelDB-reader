@@ -1,12 +1,16 @@
 {
 	"compilerOptions": {
-		"target": "ES6",
+		"target": "ES2022",
 		"module": "NodeNext",
-		"sourceMap": true,
-		"lib": ["ES2021", "DOM"],
-		"outDir": "dist",
-		"moduleResolution": "nodenext",
-		"declaration": true
+		"moduleResolution": "NodeNext",
+		"outDir": "./dist",
+		"rootDir": "./src",
+		"strict": true,
+		"declaration": true,
+		"isolatedModules": true,
+		"allowJs": true,
+		"types": ["node"]
 	},
-	"include": ["main.ts"]
+	"include": ["src/**/*"]
 }
+
