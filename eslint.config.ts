@@ -1,5 +1,6 @@
 import js from "@eslint/js";
 import { defineConfig } from "eslint/config";
+// @ts-expect-error: no types for this one
 import importNewlines from "eslint-plugin-import-newlines";
 import simpleImportSort from "eslint-plugin-simple-import-sort";
 import globals from "globals";
