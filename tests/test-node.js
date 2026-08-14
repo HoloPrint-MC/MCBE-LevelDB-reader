@@ -6,7 +6,11 @@ import { extractStructureFilesFromMcworld } from "../dist/index.js";
 async function test(db) {
 	const bytes = fs.readFileSync(path.join(import.meta.dirname, db));
 	const mcworld = new Blob([bytes]);
-	console.log("extractStructureFilesFromMcworld count:", (await extractStructureFilesFromMcworld(mcworld)).size);
+	const count = (await extractStructureFilesFromMcworld(mcworld)).size;
+	console.log("extractStructureFilesFromMcworld count:", count);
+	if(count <= 0) {
+		throw new Error(`Expected at least 1 structure in ${db}, got ${count}`);
+	}
 }
 
 await test("./world.zip");

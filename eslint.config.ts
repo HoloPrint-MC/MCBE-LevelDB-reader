@@ -1,4 +1,5 @@
 import js from "@eslint/js";
+import stylistic from "@stylistic/eslint-plugin";
 import { defineConfig } from "eslint/config";
 // @ts-expect-error: no types for this one
 import importNewlines from "eslint-plugin-import-newlines";
@@ -14,7 +15,8 @@ export default defineConfig([
 		plugins: {
 			js,
 			"simple-import-sort": simpleImportSort,
-			"import-newlines": importNewlines
+			"import-newlines": importNewlines,
+			"@stylistic": stylistic
 		},
 		extends: ["js/recommended"],
 		languageOptions: { globals: {
@@ -25,45 +27,41 @@ export default defineConfig([
 			"simple-import-sort/imports": "error",
 			"simple-import-sort/exports": "error",
 			"import-newlines/enforce": ["error", { "items": 1 }],
-			"quotes": ["error", "double"],
+			
 			"no-unused-vars": "off",
 			"@typescript-eslint/no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
-			"semi": ["error", "always"],
 			"curly": ["error", "all"],
-			"space-before-function-paren": ["error", {
+			"one-var": ["error", "never"],
+			"no-sequences": "error",
+			"no-case-declarations": "error",
+			
+			"@stylistic/quotes": ["error", "double"],
+			"@stylistic/semi": "error",
+			"@stylistic/space-before-function-paren": ["error", {
 				"anonymous": "never",
 				"named": "never",
-				"asyncArrow": "always"
+				"asyncArrow": "always",
+				"catch": "never"
 			}],
-			"one-var": ["error", "never"],
-			"indent": ["error", "tab", { "SwitchCase": 1 }],
-			"object-curly-spacing": ["error", "always"],
-			"no-sequences": "error",
-			"arrow-parens": ["error", "as-needed"],
-			"comma-dangle": ["error", "never"],
-			"object-curly-newline": ["error", {
+			// "@stylistic/space-infix-ops": ["error", { "ignoreOperators": ["?", ":"] }],
+			"@stylistic/indent": ["error", "tab", { "SwitchCase": 1 }],
+			"@stylistic/object-curly-spacing": ["error", "always"],
+			"@stylistic/arrow-parens": ["error", "as-needed"],
+			"@stylistic/comma-dangle": ["error", "never"],
+			"@stylistic/object-curly-newline": ["error", {
 				"consistent": true,
 				"minProperties": 2
 			}],
-			"object-property-newline": ["error", { "allowAllPropertiesOnSameLine": false }],
-			"brace-style": ["error", "1tbs"],
-			"keyword-spacing": ["error", {
+			"@stylistic/object-property-newline": ["error", { "allowAllPropertiesOnSameLine": false }],
+			"@stylistic/brace-style": ["error", "1tbs"],
+			"@stylistic/space-before-blocks": ["error", "always"],
+			"@stylistic/keyword-spacing": ["error", {
 				"before": true,
-				"after": false,
+				"after": true,
 				overrides: {
-					"return": { "after": true },
-					"from": { "after": true },
-					"else": { "after": true },
-					"const": { "after": true },
-					"import": { "after": true },
-					"export": { "after": true },
-					"default": { "after": true },
-					"case": { "after": true },
-					"of": { "after": true },
-					"in": { "after": true },
-					"try": { "after": true },
-					"finally": { "after": true },
-					"throw": { "after": true }
+					"if": { "after": false },
+					"for": { "after": false },
+					"while": { "after": false }
 				}
 			}]
 		}

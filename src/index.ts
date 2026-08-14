@@ -5,13 +5,12 @@ import {
 	ZipReader
 } from "@zip.js/zip.js";
 
-import LevelDb from "./LevelDb.js";
-import type {
-	IFile,
-	LevelKeyValue
-} from "./types.js";
-
-export * from "./types.js";
+import type IFile from "./minecraft-creator-tools/IFile.js";
+import LevelDb from "./minecraft-creator-tools/LevelDb.js";
+import LevelKeyValue from "./minecraft-creator-tools/LevelKeyValue.js";
+// export * from "./types.js";
+export type * from "./minecraft-creator-tools/IErrorable.js";
+export type * from "./minecraft-creator-tools/IFile.js";
 
 /** Extracts all LevelDB keys from a zipped `.mcworld` file. Also accepts the zipped "db" folder. */
 export async function readMcworld(mcworld: Blob): Promise<Map<string, LevelKeyValue>> {
@@ -46,10 +45,11 @@ export async function readLevelDb(dbFiles: Array<File>): Promise<Map<string, Lev
 	const files = await Promise.all(dbFiles.map(async file => {
 		const iFile: IFile = {
 			content: new Uint8Array(await file.arrayBuffer()),
-			loadContent: () => new Date(),
 			name: file.name,
 			storageRelativePath: file.name,
-			fullPath: file.name
+			fullPath: file.name,
+			isContentLoaded: true,
+			unload: () => undefined
 		};
 		return iFile;
 	}));
@@ -71,7 +71,7 @@ export async function readLevelDb(dbFiles: Array<File>): Promise<Map<string, Lev
 	await levelDb.init(message => {
 		console.debug(`LevelDB: ${message}`);
 	});
-	const validKeys = new Map(Object.entries(levelDb.keys).filter(([, val]) => val) as [string, LevelKeyValue][]);
+	const validKeys = new Map(Array.from(levelDb.keys.entries()).filter(([, val]) => val) as [string, LevelKeyValue][]);
 	return validKeys;
 }
 
