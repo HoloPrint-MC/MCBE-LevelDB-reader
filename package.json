@@ -38,6 +38,7 @@
 		"lint": "eslint --fix",
 		"prepublishOnly": "npm run build",
 		"change": "changeset",
+		"version": "changeset version && npm i --package-lock-only",
 		"release": "changeset publish",
 		"test": "node tests/test-node.js",
 		"docs": "typedoc"
