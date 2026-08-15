@@ -22,7 +22,7 @@ export async function readMcworld(mcworld: Blob): Promise<Map<string, LevelKeyVa
 		throw new Error("Cannot find LevelDB files!");
 	}
 	const dbRootPath = zipEntryDirname(currentEntry);
-	const dbEntries = fileEntries.filter(entry => !entry.directory && entry.filename.startsWith(dbRootPath));
+	const dbEntries = fileEntries.filter(entry => !entry.directory && entry.filename.startsWith(dbRootPath) && isInternalLevelDbFile(zipEntryBasename(entry)));
 	const dbFiles = await Promise.all(dbEntries.map(entry => zipEntryToFile(entry)));
 	return await readLevelDb(dbFiles);
 }
@@ -40,9 +40,12 @@ export function zipEntryDirname(entry: FileEntry): string {
 	return entry.filename.includes("/")? entry.filename.slice(0, entry.filename.lastIndexOf("/") + 1) : "";
 }
 
+export function isInternalLevelDbFile(fileName: string) {
+	return fileName.startsWith("MANIFEST") || fileName.endsWith(".ldb") || fileName.endsWith(".log");
+}
 /** Reads a LevelDB database from all its files and returns an object with all keys. */
 export async function readLevelDb(dbFiles: Array<File>): Promise<Map<string, LevelKeyValue>> {
-	const files = await Promise.all(dbFiles.map(async file => {
+	const files = await Promise.all(dbFiles.filter(file => isInternalLevelDbFile(file.name)).map(async file => {
 		const iFile: IFile = {
 			content: new Uint8Array(await file.arrayBuffer()),
 			name: file.name,
@@ -63,9 +66,9 @@ export async function readLevelDb(dbFiles: Array<File>): Promise<Map<string, Lev
 	files.forEach(file => {
 		if(file.name.startsWith("MANIFEST")) {
 			manifestFileArr.push(file);
-		} else if(file.name.endsWith("ldb")) {
+		} else if(file.name.endsWith(".ldb")) {
 			ldbFileArr.push(file);
-		} else if(file.name.endsWith("log")) {
+		} else if(file.name.endsWith(".log")) {
 			logFileArr.push(file);
 		}
 	});
