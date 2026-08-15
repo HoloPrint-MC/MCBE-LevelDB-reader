@@ -49,7 +49,10 @@ export async function readLevelDb(dbFiles: Array<File>): Promise<Map<string, Lev
 			storageRelativePath: file.name,
 			fullPath: file.name,
 			isContentLoaded: true,
-			unload: () => undefined
+			unload() {
+				this.content = null;
+				this.isContentLoaded = false;
+			}
 		};
 		return iFile;
 	}));
@@ -70,6 +73,8 @@ export async function readLevelDb(dbFiles: Array<File>): Promise<Map<string, Lev
 	const levelDb = new LevelDb(ldbFileArr, logFileArr, manifestFileArr, "LlamaStructureReader");
 	await levelDb.init(message => {
 		console.debug(`LevelDB: ${message}`);
+	}, {
+		unloadFilesAfterParse: true
 	});
 	const validKeys = new Map(Array.from(levelDb.keys.entries()).filter(([, val]) => val) as [string, LevelKeyValue][]);
 	return validKeys;
