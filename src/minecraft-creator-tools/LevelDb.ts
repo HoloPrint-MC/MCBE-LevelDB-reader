@@ -128,7 +128,7 @@ export default class LevelDb implements IErrorable {
 	#loadedKeys: Set<string> = new Set();
 
 	/** Whether initial metadata has been loaded */
-	EisInitialized = false;
+	#isInitialized = false;
 
 	static readonly #yieldInterval = 10;
 	static #nodeZlib: INodeZlib | false | undefined;
@@ -393,7 +393,7 @@ export default class LevelDb implements IErrorable {
 			this.deletedFileNumber
 		);
 
-		this.EisInitialized = true;
+		this.#isInitialized = true;
 	}
 
 	/**
@@ -407,7 +407,7 @@ export default class LevelDb implements IErrorable {
 		progressCallback?: (phase: string, current: number, total: number) => void;
 		unloadFilesAfterParse?: boolean;
 	}): Promise<number> {
-		if(!this.EisInitialized || !this.#index) {
+		if(!this.#isInitialized || !this.#index) {
 			throw new Error("LevelDb must be initialized before loading files");
 		}
 
