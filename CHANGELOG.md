@@ -1,5 +1,11 @@
 # mcbe-leveldb-reader
 
+## 5.0.1
+
+### Patch Changes
+
+- 743e89d: fix: Provide "browser" exports for nativeZlib rather than just "default"
+
 ## 5.0.0
 
 ### Major Changes
