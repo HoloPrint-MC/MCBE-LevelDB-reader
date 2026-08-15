@@ -1,5 +1,11 @@
 # mcbe-leveldb-reader
 
+## 3.1.1
+
+### Patch Changes
+
+- 624ce4d: docs: Add workflow to manually publish docs
+
 ## 3.1.0
 
 ### Minor Changes
