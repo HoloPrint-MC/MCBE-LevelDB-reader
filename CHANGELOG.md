@@ -1,5 +1,16 @@
 # mcbe-leveldb-reader
 
+## 5.0.0
+
+### Major Changes
+
+- 101b3f3: fix(typo): EisInitialized -> #isInitialized
+
+### Patch Changes
+
+- de858ed: refactor: Use conditional imports to avoid importing node:zlib in non-Node environments
+- 12737d9: chore: Move files from src/minecraft-creator-tools to src
+
 ## 4.0.0
 
 ### Major Changes
