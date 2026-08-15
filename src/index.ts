@@ -5,24 +5,24 @@ import {
 	ZipReader
 } from "@zip.js/zip.js";
 
-import type IFile from "./minecraft-creator-tools/IFile.js";
-import type { ILogger } from "./minecraft-creator-tools/LevelDb.js";
-import LevelDb from "./minecraft-creator-tools/LevelDb.js";
-import LevelKeyValue from "./minecraft-creator-tools/LevelKeyValue.js";
+import type IFile from "./IFile.js";
+import type { ILogger } from "./LevelDb.js";
+import LevelDb from "./LevelDb.js";
+import LevelKeyValue from "./LevelKeyValue.js";
 
-export { default as DataUtilities } from "./minecraft-creator-tools/DataUtilities.js";
-export type * from "./minecraft-creator-tools/IErrorable.js";
-export type { default as IFile } from "./minecraft-creator-tools/IFile.js";
-export type { default as ILevelDbFileInfo } from "./minecraft-creator-tools/ILevelDbFileInfo.js";
-export type { default as IStorageObject } from "./minecraft-creator-tools/IStorageObject.js";
-export type * from "./minecraft-creator-tools/LevelDb.js";
-export { default as LevelDb } from "./minecraft-creator-tools/LevelDb.js";
-export type * from "./minecraft-creator-tools/LevelDbIndex.js";
-export { default as LevelDbIndex } from "./minecraft-creator-tools/LevelDbIndex.js";
-export { default as LevelKeyValue } from "./minecraft-creator-tools/LevelKeyValue.js";
-export * from "./minecraft-creator-tools/Utilities.js";
-export { default as Utilities } from "./minecraft-creator-tools/Utilities.js";
-export { default as Varint } from "./minecraft-creator-tools/Varint.js";
+export { default as DataUtilities } from "./DataUtilities.js";
+export type * from "./IErrorable.js";
+export type { default as IFile } from "./IFile.js";
+export type { default as ILevelDbFileInfo } from "./ILevelDbFileInfo.js";
+export type { default as IStorageObject } from "./IStorageObject.js";
+export type * from "./LevelDb.js";
+export { default as LevelDb } from "./LevelDb.js";
+export type * from "./LevelDbIndex.js";
+export { default as LevelDbIndex } from "./LevelDbIndex.js";
+export { default as LevelKeyValue } from "./LevelKeyValue.js";
+export * from "./Utilities.js";
+export { default as Utilities } from "./Utilities.js";
+export { default as Varint } from "./Varint.js";
 
 
 /** Unzips a `.mcworld` file and returns all the LevelDB files. Also accepts the zipped "db" folder. */
