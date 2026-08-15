@@ -5,6 +5,8 @@
 
 import * as pako from "pako";
 
+import nativeZlib from "#nativeZlib";
+
 import DataUtilities from "./DataUtilities.js";
 import {
 	IErrorable,
@@ -12,6 +14,7 @@ import {
 } from "./IErrorable.js";
 import IFile from "./IFile.js";
 import ILevelDbFileInfo from "./ILevelDbFileInfo.js";
+import INodeZlib from "./INodeZlib.js";
 import LevelDbIndex, {
 	ILevelDbFileIndex,
 	ILevelDbLogIndex
@@ -19,8 +22,6 @@ import LevelDbIndex, {
 import LevelKeyValue from "./LevelKeyValue.js";
 import Utilities from "./Utilities.js";
 import Varint from "./Varint.js";
-
-declare const require: ((moduleName: string) => unknown) | undefined;
 
 /**
  * Options for initializing LevelDb.
@@ -57,11 +58,6 @@ export interface ILevelDbRecordVisitorState {
 	options: Required<ILevelDbRecordVisitorOptions>;
 	sourceKind: "ldb" | "log";
 	sourcePath?: string;
-}
-
-interface INodeZlib {
-	inflateRawSync(input: Uint8Array): Uint8Array;
-	inflateSync(input: Uint8Array): Uint8Array;
 }
 
 /**
@@ -131,7 +127,6 @@ export default class LevelDb implements IErrorable {
 	#isInitialized = false;
 
 	static readonly #yieldInterval = 10;
-	static #nodeZlib: INodeZlib | false | undefined;
 
 	/** Get whether lazy loading mode is enabled */
 	get isLazyMode(): boolean {
@@ -143,44 +138,10 @@ export default class LevelDb implements IErrorable {
 		return this.#index;
 	}
 
-	#getNodeZlib(): INodeZlib | undefined {
-		if(LevelDb.#nodeZlib === false) {
-			return undefined;
-		}
-
-		if(LevelDb.#nodeZlib !== undefined) {
-			return LevelDb.#nodeZlib;
-		}
-
-		if(typeof process === "undefined" || !process.versions?.node || typeof require !== "function") {
-			this.logger.verbose?.("Native zlib unavailable; using pako inflate fallback.");
-			LevelDb.#nodeZlib = false;
-			return undefined;
-		}
-
-		try {
-			const zlib = require("zlib") as Partial<INodeZlib>;
-
-			if(typeof zlib.inflateRawSync === "function" && typeof zlib.inflateSync === "function") {
-				LevelDb.#nodeZlib = zlib as INodeZlib;
-				this.logger.verbose?.("Native zlib found; using Node zlib for LevelDB inflate.");
-				return LevelDb.#nodeZlib;
-			}
-		} catch {
-			// Not running in Node, or zlib is unavailable in this runtime.
-		}
-
-		this.logger.verbose?.("Native zlib not found; using pako inflate fallback.");
-		LevelDb.#nodeZlib = false;
-		return undefined;
-	}
-
 	#tryInflate(content: Uint8Array, raw: boolean): Uint8Array | undefined {
-		const zlib = this.#getNodeZlib();
-
-		if(zlib) {
+		if(nativeZlib) {
 			try {
-				const inflated = raw ? zlib.inflateRawSync(content) : zlib.inflateSync(content);
+				const inflated = raw ? nativeZlib.inflateRawSync(content) : nativeZlib.inflateSync(content);
 
 				// Node zlib returns Buffer, whose slice() aliases memory. The LDB parser
 				// relies on Uint8Array.slice() copy semantics when retaining key/value bytes.

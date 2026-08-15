@@ -32,6 +32,18 @@
 			"import": "./dist/index.js"
 		}
 	},
+	"imports": {
+		"#nativeZlib": {
+			"node": {
+				"types": "./dist/nativeZlib.node.d.ts",
+				"import": "./dist/nativeZlib.node.js"
+			},
+			"default": {
+				"types": "./dist/nativeZlib.browser.d.ts",
+				"import": "./dist/nativeZlib.browser.js"
+			}
+		}
+	},
 	"scripts": {
 		"build": "tsc",
 		"dev": "tsc --watch",
