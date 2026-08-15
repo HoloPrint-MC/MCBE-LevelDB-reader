@@ -64,10 +64,13 @@ interface INodeZlib {
 	inflateSync(input: Uint8Array): Uint8Array;
 }
 
+/**
+ * A logger which LevelDB will call. If a method isn't present, it won't log at all.
+ */
 export interface Logger {
-	verbose(message: string): void;
-	error(message: string): void;
-	assert(predicate: boolean): void;
+	verbose?(message: string): void;
+	error?(message: string): void;
+	assert?(predicate: boolean): void;
 }
 
 /**
@@ -148,7 +151,7 @@ export default class LevelDb implements IErrorable {
 		}
 
 		if(typeof process === "undefined" || !process.versions?.node || typeof require !== "function") {
-			this.logger.verbose("[LevelDb] Native zlib unavailable; using pako inflate fallback.");
+			this.logger.verbose?.("[LevelDb] Native zlib unavailable; using pako inflate fallback.");
 			LevelDb.#nodeZlib = false;
 			return undefined;
 		}
@@ -158,14 +161,14 @@ export default class LevelDb implements IErrorable {
 
 			if(typeof zlib.inflateRawSync === "function" && typeof zlib.inflateSync === "function") {
 				LevelDb.#nodeZlib = zlib as INodeZlib;
-				this.logger.verbose("[LevelDb] Native zlib found; using Node zlib for LevelDB inflate.");
+				this.logger.verbose?.("[LevelDb] Native zlib found; using Node zlib for LevelDB inflate.");
 				return LevelDb.#nodeZlib;
 			}
 		} catch {
 			// Not running in Node, or zlib is unavailable in this runtime.
 		}
 
-		this.logger.verbose("[LevelDb] Native zlib not found; using pako inflate fallback.");
+		this.logger.verbose?.("[LevelDb] Native zlib not found; using pako inflate fallback.");
 		LevelDb.#nodeZlib = false;
 		return undefined;
 	}
@@ -197,6 +200,9 @@ export default class LevelDb implements IErrorable {
 		return this.keys.size;
 	}
 
+	/**
+	 * @param logger If provided, logs will go through here. If not present, it will default to console logs. To disable all logging, pass an empty object `{}`.
+	 */
 	public constructor(ldbFileArr: IFile[], logFileArr: IFile[], manifestFilesArr: IFile[], context?: string, logger?: Logger) {
 		this.ldbFiles = ldbFileArr;
 		this.logFiles = logFileArr;
@@ -224,7 +230,7 @@ export default class LevelDb implements IErrorable {
 			contextOut = this.context;
 		}
 
-		this.logger.error(message + (contextOut ? " " + contextOut : ""));
+		this.logger.error?.(message + (contextOut ? " " + contextOut : ""));
 
 		this.errorMessages.push({
 			message: message,
@@ -270,7 +276,7 @@ export default class LevelDb implements IErrorable {
 					let level = 0;
 
 					if(this.newFileLevel && this.newFileNumber) {
-						this.logger.assert(this.newFileLevel.length === this.newFileNumber.length);
+						this.logger.assert?.(this.newFileLevel.length === this.newFileNumber.length);
 
 						if(this.newFileLevel.length === this.newFileNumber.length) {
 							for(let j = 0; j < this.newFileNumber.length; j++) {
