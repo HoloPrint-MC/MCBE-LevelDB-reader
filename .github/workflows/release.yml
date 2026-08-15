@@ -8,6 +8,7 @@ permissions:
   contents: write
   id-token: write
   pull-requests: write
+  pages: write
 jobs:
   release:
     runs-on: ubuntu-latest
@@ -47,3 +48,14 @@ jobs:
               --jq '.content' | base64 -d | jq -r '.version')
             gh pr edit "$PR_NUMBER" --title "chore: Release ${VERSION}"
           fi
+      - name: Generate docs
+        if: steps.changesets.outputs.published == 'true'
+        run: npm run docs
+      - name: Upload docs as artifact
+        if: steps.changesets.outputs.published == 'true'
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: docs
+      - name: Publish docs to GitHub Pages
+        if: steps.changesets.outputs.published == 'true'
+        uses: actions/deploy-pages@v5
