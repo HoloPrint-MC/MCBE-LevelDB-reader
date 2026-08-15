@@ -108,48 +108,48 @@ export default class LevelDb implements IErrorable {
 	context?: string;
 
 	/** Index for lazy loading - tracks file metadata without loading content */
-	private _index?: LevelDbIndex;
+	#index?: LevelDbIndex;
 
 	/** Whether lazy loading mode is enabled */
-	private _isLazyMode = false;
+	#isLazyMode = false;
 
 	/** Maximum keys to keep in memory during lazy mode */
-	private _maxKeysInMemory = 50000;
+	#maxKeysInMemory = 50000;
 
 	/** LRU tracking for key eviction in lazy mode */
-	private _keyAccessOrder: string[] = [];
+	#keyAccessOrder: string[] = [];
 
 	/** Set of keys that have been loaded but may be evicted */
-	private _loadedKeys: Set<string> = new Set();
+	#loadedKeys: Set<string> = new Set();
 
 	/** Whether initial metadata has been loaded */
-	private _isInitialized = false;
+	EisInitialized = false;
 
-	private static readonly _yieldInterval = 10;
-	private static _nodeZlib: INodeZlib | false | undefined;
+	static readonly #yieldInterval = 10;
+	static #nodeZlib: INodeZlib | false | undefined;
 
 	/** Get whether lazy loading mode is enabled */
 	get isLazyMode(): boolean {
-		return this._isLazyMode;
+		return this.#isLazyMode;
 	}
 
 	/** Get the file index for lazy loading */
 	get index(): LevelDbIndex | undefined {
-		return this._index;
+		return this.#index;
 	}
 
-	private _getNodeZlib(): INodeZlib | undefined {
-		if(LevelDb._nodeZlib === false) {
+	#getNodeZlib(): INodeZlib | undefined {
+		if(LevelDb.#nodeZlib === false) {
 			return undefined;
 		}
 
-		if(LevelDb._nodeZlib !== undefined) {
-			return LevelDb._nodeZlib;
+		if(LevelDb.#nodeZlib !== undefined) {
+			return LevelDb.#nodeZlib;
 		}
 
 		if(typeof process === "undefined" || !process.versions?.node || typeof require !== "function") {
 			this.logger.verbose("[LevelDb] Native zlib unavailable; using pako inflate fallback.");
-			LevelDb._nodeZlib = false;
+			LevelDb.#nodeZlib = false;
 			return undefined;
 		}
 
@@ -157,21 +157,21 @@ export default class LevelDb implements IErrorable {
 			const zlib = require("zlib") as Partial<INodeZlib>;
 
 			if(typeof zlib.inflateRawSync === "function" && typeof zlib.inflateSync === "function") {
-				LevelDb._nodeZlib = zlib as INodeZlib;
+				LevelDb.#nodeZlib = zlib as INodeZlib;
 				this.logger.verbose("[LevelDb] Native zlib found; using Node zlib for LevelDB inflate.");
-				return LevelDb._nodeZlib;
+				return LevelDb.#nodeZlib;
 			}
 		} catch {
 			// Not running in Node, or zlib is unavailable in this runtime.
 		}
 
 		this.logger.verbose("[LevelDb] Native zlib not found; using pako inflate fallback.");
-		LevelDb._nodeZlib = false;
+		LevelDb.#nodeZlib = false;
 		return undefined;
 	}
 
-	private _tryInflate(content: Uint8Array, raw: boolean): Uint8Array | undefined {
-		const zlib = this._getNodeZlib();
+	#tryInflate(content: Uint8Array, raw: boolean): Uint8Array | undefined {
+		const zlib = this.#getNodeZlib();
 
 		if(zlib) {
 			try {
@@ -209,7 +209,7 @@ export default class LevelDb implements IErrorable {
 		};
 	}
 
-	private _pushError(message: string, contextIn?: string) {
+	#pushError(message: string, contextIn?: string) {
 		this.isInErrorState = true;
 
 		if(this.errorMessages === undefined) {
@@ -289,7 +289,7 @@ export default class LevelDb implements IErrorable {
 					});
 				}
 			} catch(e: unknown) {
-				this._pushError(`Error including LDB file: ${file.fullPath} Error: ${e}`);
+				this.#pushError(`Error including LDB file: ${file.fullPath} Error: ${e}`);
 			}
 		}
 
@@ -320,7 +320,7 @@ export default class LevelDb implements IErrorable {
 
 			// Periodically yield to the event loop to allow garbage collection
 			// This helps prevent out-of-memory errors when loading large worlds
-			if(i % LevelDb._yieldInterval === 0 && i > 0) {
+			if(i % LevelDb.#yieldInterval === 0 && i > 0) {
 				await new Promise(resolve => setTimeout(resolve, 0));
 			}
 		}
@@ -345,7 +345,7 @@ export default class LevelDb implements IErrorable {
 			}
 
 			// Periodically yield to allow garbage collection
-			if(i % LevelDb._yieldInterval === 0 && i > 0) {
+			if(i % LevelDb.#yieldInterval === 0 && i > 0) {
 				await new Promise(resolve => setTimeout(resolve, 0));
 			}
 		}
@@ -378,7 +378,7 @@ export default class LevelDb implements IErrorable {
 			this.manifestFiles[i].unload();
 		}
 
-		const ldbFileInfos = this.getActiveLdbFileInfosInCompatibilityOrder();
+		const ldbFileInfos = this.#getActiveLdbFileInfosInCompatibilityOrder();
 
 		for(let i = 0; i < ldbFileInfos.length; i++) {
 			const ldbFileInfo = ldbFileInfos[i];
@@ -394,7 +394,7 @@ export default class LevelDb implements IErrorable {
 
 			ldbFile.unload();
 
-			if(i % LevelDb._yieldInterval === 0 && i > 0) {
+			if(i % LevelDb.#yieldInterval === 0 && i > 0) {
 				await new Promise(resolve => setTimeout(resolve, 0));
 			}
 		}
@@ -416,13 +416,13 @@ export default class LevelDb implements IErrorable {
 
 			logFile.unload();
 
-			if(i % LevelDb._yieldInterval === 0 && i > 0) {
+			if(i % LevelDb.#yieldInterval === 0 && i > 0) {
 				await new Promise(resolve => setTimeout(resolve, 0));
 			}
 		}
 	}
 
-	private getActiveLdbFileInfosInCompatibilityOrder(): ILevelDbFileInfo[] {
+	#getActiveLdbFileInfosInCompatibilityOrder(): ILevelDbFileInfo[] {
 		const ldbFileInfos: ILevelDbFileInfo[] = [];
 
 		for(let i = 0; i < this.ldbFiles.length; i++) {
@@ -454,7 +454,7 @@ export default class LevelDb implements IErrorable {
 					});
 				}
 			} catch(e: unknown) {
-				this._pushError(`Error including LDB file: ${file.fullPath} Error: ${e}`);
+				this.#pushError(`Error including LDB file: ${file.fullPath} Error: ${e}`);
 			}
 		}
 
@@ -478,10 +478,10 @@ export default class LevelDb implements IErrorable {
 		this.keys = new Map<string, LevelKeyValue | false | undefined>();
 		this.isInErrorState = false;
 		this.errorMessages = undefined;
-		this._isLazyMode = true;
-		this._maxKeysInMemory = options?.maxKeysInMemory ?? 50000;
-		this._keyAccessOrder = [];
-		this._loadedKeys = new Set();
+		this.#isLazyMode = true;
+		this.#maxKeysInMemory = options?.maxKeysInMemory ?? 50000;
+		this.#keyAccessOrder = [];
+		this.#loadedKeys = new Set();
 
 		// Load manifest to get file metadata
 		for(let i = 0; i < this.manifestFiles.length; i++) {
@@ -496,8 +496,8 @@ export default class LevelDb implements IErrorable {
 		}
 
 		// Build the index from manifest metadata
-		this._index = new LevelDbIndex();
-		this._index.initFromManifest(
+		this.#index = new LevelDbIndex();
+		this.#index.initFromManifest(
 			this.ldbFiles,
 			this.logFiles,
 			this.newFileLevel,
@@ -507,7 +507,7 @@ export default class LevelDb implements IErrorable {
 			this.deletedFileNumber
 		);
 
-		this._isInitialized = true;
+		this.EisInitialized = true;
 	}
 
 	/**
@@ -521,18 +521,18 @@ export default class LevelDb implements IErrorable {
 		progressCallback?: (phase: string, current: number, total: number) => void;
 		unloadFilesAfterParse?: boolean;
 	}): Promise<number> {
-		if(!this._isInitialized || !this._index) {
+		if(!this.EisInitialized || !this.#index) {
 			throw new Error("LevelDb must be initialized before loading files");
 		}
 
 		const unloadAfterParse = options?.unloadFilesAfterParse ?? true;
 		const yieldInterval = 10;
 		let filesProcessed = 0;
-		const totalFiles = this._index.totalFiles;
+		const totalFiles = this.#index.totalFiles;
 
 		// Load LDB files in order (sorted by level for correct supercession)
-		for(let i = 0; i < this._index.ldbFileIndexes.length; i++) {
-			const fileIdx = this._index.ldbFileIndexes[i];
+		for(let i = 0; i < this.#index.ldbFileIndexes.length; i++) {
+			const fileIdx = this.#index.ldbFileIndexes[i];
 			const file = fileIdx.fileInfo.file;
 
 			const content = file.content;
@@ -558,8 +558,8 @@ export default class LevelDb implements IErrorable {
 		}
 
 		// Load LOG files in order (sorted by name for correct supercession)
-		for(let i = 0; i < this._index.logFileIndexes.length; i++) {
-			const fileIdx = this._index.logFileIndexes[i];
+		for(let i = 0; i < this.#index.logFileIndexes.length; i++) {
+			const fileIdx = this.#index.logFileIndexes[i];
 			const file = fileIdx.file;
 
 			const content = file.content;
@@ -613,7 +613,7 @@ export default class LevelDb implements IErrorable {
 	}
 
 	// Track the last parsed size for each log file to enable incremental parsing
-	private _logFileParsedSizes: Map<string, number> = new Map();
+	#logFileParsedSizes: Map<string, number> = new Map();
 
 	/**
 	 * Parse a new or modified LDB/LOG file and return the chunk coordinates affected.
@@ -641,7 +641,7 @@ export default class LevelDb implements IErrorable {
 		const filePath = file.storageRelativePath || file.fullPath;
 
 		// For log files, check if the file has grown since last parse
-		const previousSize = this._logFileParsedSizes.get(filePath) || 0;
+		const previousSize = this.#logFileParsedSizes.get(filePath) || 0;
 		const currentSize = content.length;
 
 		if(isLogFile && currentSize <= previousSize) {
@@ -661,7 +661,7 @@ export default class LevelDb implements IErrorable {
 			// For log files, parse and extract chunks from ALL keys in the file that are chunk-related
 			// This is because log files are append-only and we need to catch any chunk updates
 			this.parseLogContent(content, file.storageRelativePath);
-			this._logFileParsedSizes.set(filePath, currentSize);
+			this.#logFileParsedSizes.set(filePath, currentSize);
 
 			// For log files that have grown, find all keys that now have different values
 			// (parseLogContent creates new LevelKeyValue objects, so any updated key will have a different reference)
@@ -679,7 +679,7 @@ export default class LevelDb implements IErrorable {
 
 				// This is either a new key or an updated key (different object reference)
 				// Extract chunk coordinates
-				this._extractChunkFromKey(keyname, seenChunks, affectedChunks);
+				this.#extractChunkFromKey(keyname, seenChunks, affectedChunks);
 			}
 		} else {
 			// For LDB files, use the original approach of tracking new/updated keys
@@ -696,7 +696,7 @@ export default class LevelDb implements IErrorable {
 					continue;
 				} // Same object reference = no change
 
-				this._extractChunkFromKey(keyname, seenChunks, affectedChunks);
+				this.#extractChunkFromKey(keyname, seenChunks, affectedChunks);
 			}
 		}
 
@@ -716,7 +716,7 @@ export default class LevelDb implements IErrorable {
 	/**
 	 * Extract chunk coordinates from a key name if it represents chunk data.
 	 */
-	private _extractChunkFromKey(keyname: string, seenChunks: Set<string>, affectedChunks: IChunkCoordinate[]): boolean {
+	#extractChunkFromKey(keyname: string, seenChunks: Set<string>, affectedChunks: IChunkCoordinate[]): boolean {
 		// Extract chunk coordinates from key (9-14 byte keys encode chunk data)
 		if(keyname.length < 9 || keyname.length > 14) {
 			return false;
@@ -786,24 +786,24 @@ export default class LevelDb implements IErrorable {
 	 * Evict old keys to stay under the memory limit.
 	 * Uses LRU (least recently used) eviction.
 	 */
-	private _evictKeysIfNeeded(): void {
-		if(!this._isLazyMode || this.keys.size <= this._maxKeysInMemory) {
+	#evictKeysIfNeeded(): void {
+		if(!this.#isLazyMode || this.keys.size <= this.#maxKeysInMemory) {
 			return;
 		}
 
 		// Evict oldest keys until we're under the limit
-		const keysToEvict = this.keys.size - Math.floor(this._maxKeysInMemory * 0.8); // Evict to 80%
+		const keysToEvict = this.keys.size - Math.floor(this.#maxKeysInMemory * 0.8); // Evict to 80%
 
-		for(let i = 0; i < keysToEvict && this._keyAccessOrder.length > 0; i++) {
-			const oldestKey = this._keyAccessOrder.shift();
-			if(oldestKey && this._loadedKeys.has(oldestKey)) {
+		for(let i = 0; i < keysToEvict && this.#keyAccessOrder.length > 0; i++) {
+			const oldestKey = this.#keyAccessOrder.shift();
+			if(oldestKey && this.#loadedKeys.has(oldestKey)) {
 				const keyValue = this.keys.get(oldestKey);
 				// keyValue can be LevelKeyValue, false, or undefined
 				if(keyValue && typeof keyValue !== "boolean") {
 					keyValue.clearAllData();
 				}
 				this.keys.delete(oldestKey);
-				this._loadedKeys.delete(oldestKey);
+				this.#loadedKeys.delete(oldestKey);
 			}
 		}
 	}
@@ -811,24 +811,24 @@ export default class LevelDb implements IErrorable {
 	/**
 	 * Track key access for LRU eviction.
 	 */
-	private _trackKeyAccess(key: string): void {
-		if(!this._isLazyMode) {
+	#trackKeyAccess(key: string): void {
+		if(!this.#isLazyMode) {
 			return;
 		}
 
 		// Remove from old position if it exists
-		const existingIndex = this._keyAccessOrder.indexOf(key);
+		const existingIndex = this.#keyAccessOrder.indexOf(key);
 		if(existingIndex >= 0) {
-			this._keyAccessOrder.splice(existingIndex, 1);
+			this.#keyAccessOrder.splice(existingIndex, 1);
 		}
 
 		// Add to end (most recently used)
-		this._keyAccessOrder.push(key);
-		this._loadedKeys.add(key);
+		this.#keyAccessOrder.push(key);
+		this.#loadedKeys.add(key);
 
 		// Periodically evict old keys
-		if(this.keys.size > this._maxKeysInMemory) {
-			this._evictKeysIfNeeded();
+		if(this.keys.size > this.#maxKeysInMemory) {
+			this.#evictKeysIfNeeded();
 		}
 	}
 
@@ -842,17 +842,17 @@ export default class LevelDb implements IErrorable {
 	public async getKey(key: string): Promise<LevelKeyValue | false | undefined> {
 		// Check if already in memory
 		if(this.keys.has(key)) {
-			this._trackKeyAccess(key);
+			this.#trackKeyAccess(key);
 			return this.keys.get(key);
 		}
 
 		// In non-lazy mode, if not in keys, it doesn't exist
-		if(!this._isLazyMode || !this._index) {
+		if(!this.#isLazyMode || !this.#index) {
 			return undefined;
 		}
 
 		// Lazy mode: find and load files that might contain this key
-		const potentialFiles = this._index.findPotentialFilesForKey(key);
+		const potentialFiles = this.#index.findPotentialFilesForKey(key);
 
 		for(const fileIdx of potentialFiles) {
 			if(!fileIdx.isLoaded) {
@@ -860,7 +860,7 @@ export default class LevelDb implements IErrorable {
 
 				// Check if key is now available
 				if(this.keys.has(key)) {
-					this._trackKeyAccess(key);
+					this.#trackKeyAccess(key);
 					return this.keys.get(key);
 				}
 			}
@@ -882,15 +882,15 @@ export default class LevelDb implements IErrorable {
 			}
 		}
 		this.keys.clear();
-		this._keyAccessOrder = [];
-		this._loadedKeys.clear();
+		this.#keyAccessOrder = [];
+		this.#loadedKeys.clear();
 
 		// Reset file loaded flags so they can be reloaded on demand
-		if(this._index) {
-			for(const fileIdx of this._index.ldbFileIndexes) {
+		if(this.#index) {
+			for(const fileIdx of this.#index.ldbFileIndexes) {
 				fileIdx.isLoaded = false;
 			}
-			for(const fileIdx of this._index.logFileIndexes) {
+			for(const fileIdx of this.#index.logFileIndexes) {
 				fileIdx.isLoaded = false;
 			}
 		}
@@ -912,7 +912,7 @@ export default class LevelDb implements IErrorable {
 			content[content.length - 2] !== 71 ||
 			content[content.length - 1] !== 219
 		) {
-			this._pushError("Unexpected bytes in LDB file. File seems unreadable.", context);
+			this.#pushError("Unexpected bytes in LDB file. File seems unreadable.", context);
 			return;
 		}
 
@@ -932,12 +932,12 @@ export default class LevelDb implements IErrorable {
 		const indexSize = new Varint(content, index);
 
 		if(indexOffset.value <= 0 || indexOffset.value + indexSize.value >= content.length) {
-			this._pushError("LDB content index offset not within bounds.", context);
+			this.#pushError("LDB content index offset not within bounds.", context);
 			return false;
 		}
 
 		if(metaIndexOffset.value <= 0 || metaIndexOffset.value + metaIndexSize.value >= content.length) {
-			this._pushError("LDB meta index offset not within bounds.", context);
+			this.#pushError("LDB meta index offset not within bounds.", context);
 			return false;
 		}
 
@@ -946,10 +946,10 @@ export default class LevelDb implements IErrorable {
 		let indexContent;
 
 		// I believe this logic replicates: `https://twitter.com/_tomcc/status/894294552084860928`
-		indexContent = this._tryInflate(indexContentCompressed, true);
+		indexContent = this.#tryInflate(indexContentCompressed, true);
 
 		if(!indexContent) {
-			indexContent = this._tryInflate(indexContentCompressed, false);
+			indexContent = this.#tryInflate(indexContentCompressed, false);
 		}
 
 		if(!indexContent) {
@@ -979,12 +979,12 @@ export default class LevelDb implements IErrorable {
 					indexByteIndex += blockSize.byteLength;
 
 					if(blockOffset.value < 0 || blockOffset.value + blockSize.value >= content.length) {
-						this._pushError("Block offset does not appear correct", context);
+						this.#pushError("Block offset does not appear correct", context);
 						return;
 					}
 
 					if(indexByteIndex !== indexBytes.length) {
-						this._pushError("Index byte index is not correct", context);
+						this.#pushError("Index byte index is not correct", context);
 						return;
 					}
 
@@ -992,10 +992,10 @@ export default class LevelDb implements IErrorable {
 
 					let blockContent;
 
-					blockContent = this._tryInflate(blockContentCompressed, true);
+					blockContent = this.#tryInflate(blockContentCompressed, true);
 
 					if(!blockContent) {
-						blockContent = this._tryInflate(blockContentCompressed, false);
+						blockContent = this.#tryInflate(blockContentCompressed, false);
 					}
 
 					if(!blockContent) {
@@ -1004,13 +1004,13 @@ export default class LevelDb implements IErrorable {
 
 					keysParsed += this.parseLdbBlockBytes(blockContent, 0, blockContent.length, context, visitorState);
 				} else {
-					this._pushError("Could not find index key.", context);
+					this.#pushError("Could not find index key.", context);
 				}
 			}
 		}
 
 		if(keysParsed === 0) {
-			this._pushError("No keys found in LDB.", context);
+			this.#pushError("No keys found in LDB.", context);
 		}
 
 		return keysParsed;
@@ -1050,7 +1050,7 @@ export default class LevelDb implements IErrorable {
 			}
 
 			if(lb.length === undefined) {
-				this._pushError("Unexpected parse of level key value " + key, context);
+				this.#pushError("Unexpected parse of level key value " + key, context);
 				return false;
 			}
 
@@ -1082,7 +1082,7 @@ export default class LevelDb implements IErrorable {
 		const endRestartSize = restarts * 4 + 4;
 
 		if(endRestartSize > offset + length) {
-			this._pushError("Unexpected size received for LDB bytes. File could be corrupt.", context);
+			this.#pushError("Unexpected size received for LDB bytes. File could be corrupt.", context);
 			return 0;
 		}
 
@@ -1114,7 +1114,7 @@ export default class LevelDb implements IErrorable {
 			}
 
 			if(lb.length === undefined || lb.length < 0) {
-				throw new Error(this._pushError("Unexpected parse of key " + key, context));
+				throw new Error(this.#pushError("Unexpected parse of key " + key, context));
 			}
 
 			keysParsed++;
@@ -1163,14 +1163,14 @@ export default class LevelDb implements IErrorable {
 						keysParsed += this.addValueFromLog(pendingBytes, 0, pendingBytes.length, context, visitorState);
 					}
 				} else {
-					this._pushError(
+					this.#pushError(
 						"Unexpected middle to a set of bytes found within LevelDB content. File seems unreadable.",
 						context
 					);
 					return;
 				}
 			} else {
-				this._pushError("Unexpected type for log file. File seems unreadable.", context);
+				this.#pushError("Unexpected type for log file. File seems unreadable.", context);
 				return;
 			}
 
@@ -1184,7 +1184,7 @@ export default class LevelDb implements IErrorable {
 			while(bytesFromEndOfBlock <= 6 && bytesFromEndOfBlock > 0) {
 				bytesFromEndOfBlock--;
 				if(content[index] !== 0) {
-					this._pushError("Unexpectedly found a padding trailer with data", context);
+					this.#pushError("Unexpectedly found a padding trailer with data", context);
 				}
 
 				index++;
@@ -1192,7 +1192,7 @@ export default class LevelDb implements IErrorable {
 		}
 
 		if(keysParsed <= 0) {
-			this._pushError("Did not find any keys in log file", context);
+			this.#pushError("Did not find any keys in log file", context);
 		}
 
 		return keysParsed;
@@ -1225,21 +1225,21 @@ export default class LevelDb implements IErrorable {
 			index += keyLength.value;
 
 			if(index > content.length) {
-				this._pushError("Unexpected log file length issue.", context);
+				this.#pushError("Unexpected log file length issue.", context);
 			}
 
 			if(index <= content.length) {
 				const key = Utilities.getAsciiStringFromUint8Array(keyBytes);
 
 				if(key === undefined) {
-					this._pushError("Unexpected empty key in a log file. File could be unreadable.", context);
+					this.#pushError("Unexpected empty key in a log file. File could be unreadable.", context);
 				}
 
 				keysParsed++;
 
 				if(isLive) {
 					if(index >= content.length) {
-						this._pushError("Unexpectedly leftover content in a log file. File could be unreadable.", context);
+						this.#pushError("Unexpectedly leftover content in a log file. File could be unreadable.", context);
 					}
 
 					const dataLength = new Varint(content, index);
@@ -1357,14 +1357,14 @@ export default class LevelDb implements IErrorable {
 						this.addValueFromManifest(pendingBytes, 0, pendingBytes.length);
 					}
 				} else {
-					this._pushError(
+					this.#pushError(
 						"Unexpected middle to a set of bytes found within a manifest file. File could be unreadable.",
 						context
 					);
 					return;
 				}
 			} else {
-				this._pushError("Unexpected type for manifest file. File could be unreadable.", context);
+				this.#pushError("Unexpected type for manifest file. File could be unreadable.", context);
 				return;
 			}
 
@@ -1378,7 +1378,7 @@ export default class LevelDb implements IErrorable {
 			while(bytesFromEndOfBlock <= 6 && bytesFromEndOfBlock > 0) {
 				bytesFromEndOfBlock--;
 				if(content[index] !== 0) {
-					this._pushError("Unexpectedly found a padding trailer with data in a manifest file.", context);
+					this.#pushError("Unexpectedly found a padding trailer with data in a manifest file.", context);
 				}
 				index++;
 			}
@@ -1407,13 +1407,13 @@ export default class LevelDb implements IErrorable {
 					index += comparatorPrefixedSliceLength.value;
 
 					if(index > content.length) {
-						this._pushError("Unexpected manifest file length issue.", context);
+						this.#pushError("Unexpected manifest file length issue.", context);
 					}
 
 					this.comparator = Utilities.getAsciiStringFromUint8Array(comparatorBytes);
 
 					if(this.comparator === undefined) {
-						this._pushError("Unexpected comparator.", context);
+						this.#pushError("Unexpected comparator.", context);
 					}
 					break;
 
@@ -1458,13 +1458,13 @@ export default class LevelDb implements IErrorable {
 					index += compactPointerStrLength.value;
 
 					if(index > content.length) {
-						this._pushError("Unexpected manifest file length issue at compact pointer.", context);
+						this.#pushError("Unexpected manifest file length issue at compact pointer.", context);
 					}
 
 					this.compactPointerStrings.push(Utilities.getAsciiStringFromUint8Array(compactPointerStrBytes));
 
 					if(this.compactPointerStrings[this.compactPointerStrings.length - 1] === undefined) {
-						this._pushError("Unexpected compact pointer string.", context);
+						this.#pushError("Unexpected compact pointer string.", context);
 					}
 					break;
 
@@ -1524,13 +1524,13 @@ export default class LevelDb implements IErrorable {
 					index += newFileSmallestStrLength.value;
 
 					if(index > content.length) {
-						this._pushError("Unexpected manifest file length issue at new file smallest.", context);
+						this.#pushError("Unexpected manifest file length issue at new file smallest.", context);
 					}
 
 					this.newFileSmallest.push(Utilities.getAsciiStringFromUint8Array(newFileSmallestStrBytes));
 
 					if(this.newFileSmallest[this.newFileSmallest.length - 1] === undefined) {
-						this._pushError("Unexpected file smallest tag string.", context);
+						this.#pushError("Unexpected file smallest tag string.", context);
 					}
 
 					const newFileLargestStrLength = new Varint(content, index);
@@ -1544,13 +1544,13 @@ export default class LevelDb implements IErrorable {
 					index += newFileLargestStrLength.value;
 
 					if(index > content.length) {
-						this._pushError("Unexpected manifest file length issue at new file largest.", context);
+						this.#pushError("Unexpected manifest file length issue at new file largest.", context);
 					}
 
 					this.newFileLargest.push(Utilities.getAsciiStringFromUint8Array(newFileLargestStrBytes));
 
 					if(this.newFileLargest[this.newFileLargest.length - 1] === undefined) {
-						this._pushError("Unexpected file largest tag string.", context);
+						this.#pushError("Unexpected file largest tag string.", context);
 					}
 					break;
 
@@ -1561,7 +1561,7 @@ export default class LevelDb implements IErrorable {
 					break;
 
 				default:
-					this._pushError("Unexpected manifest item: " + tag.value, context);
+					this.#pushError("Unexpected manifest item: " + tag.value, context);
 			}
 		}
 	}
