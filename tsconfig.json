@@ -1,15 +1,14 @@
 {
 	"compilerOptions": {
-		"checkJs": true,
 		"target": "ES2022",
 		"module": "NodeNext",
 		"moduleResolution": "NodeNext",
 		"outDir": "./dist",
 		"rootDir": "./src",
-		"strict": true,
 		"declaration": true,
 		"isolatedModules": true,
 		"allowJs": true,
+		"checkJs": true,
 		"types": ["node"]
 	},
 	"include": ["src/**/*"]

@@ -8,9 +8,10 @@ import {
 import type IFile from "./minecraft-creator-tools/IFile.js";
 import LevelDb from "./minecraft-creator-tools/LevelDb.js";
 import LevelKeyValue from "./minecraft-creator-tools/LevelKeyValue.js";
-// export * from "./types.js";
 export type * from "./minecraft-creator-tools/IErrorable.js";
 export type * from "./minecraft-creator-tools/IFile.js";
+export type * from "./minecraft-creator-tools/ILevelDbFileInfo.js";
+export type * from "./minecraft-creator-tools/IStorageObject.js";
 
 /** Extracts all LevelDB keys from a zipped `.mcworld` file. Also accepts the zipped "db" folder. */
 export async function readMcworld(mcworld: Blob): Promise<Map<string, LevelKeyValue>> {
