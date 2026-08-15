@@ -38,6 +38,10 @@
 				"types": "./dist/nativeZlib.node.d.ts",
 				"import": "./dist/nativeZlib.node.js"
 			},
+			"browser": {
+				"types": "./dist/nativeZlib.browser.d.ts",
+				"import": "./dist/nativeZlib.browser.js"
+			},
 			"default": {
 				"types": "./dist/nativeZlib.browser.d.ts",
 				"import": "./dist/nativeZlib.browser.js"
