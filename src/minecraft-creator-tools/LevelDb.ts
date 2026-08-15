@@ -51,7 +51,7 @@ export interface ILevelDbRecordVisitorOptions {
 
 export type LevelDbRecordVisitor = (record: ILevelDbParsedRecord) => void;
 
-interface ILevelDbRecordVisitorState {
+export interface ILevelDbRecordVisitorState {
 	ordinal: number;
 	visitor: LevelDbRecordVisitor;
 	options: Required<ILevelDbRecordVisitorOptions>;

@@ -8,10 +8,20 @@ import {
 import type IFile from "./minecraft-creator-tools/IFile.js";
 import LevelDb from "./minecraft-creator-tools/LevelDb.js";
 import LevelKeyValue from "./minecraft-creator-tools/LevelKeyValue.js";
+export { default as DataUtilities } from "./minecraft-creator-tools/DataUtilities.js";
 export type * from "./minecraft-creator-tools/IErrorable.js";
-export type * from "./minecraft-creator-tools/IFile.js";
-export type * from "./minecraft-creator-tools/ILevelDbFileInfo.js";
-export type * from "./minecraft-creator-tools/IStorageObject.js";
+export type { default as IFile } from "./minecraft-creator-tools/IFile.js";
+export type { default as ILevelDbFileInfo } from "./minecraft-creator-tools/ILevelDbFileInfo.js";
+export type { default as IStorageObject } from "./minecraft-creator-tools/IStorageObject.js";
+export type * from "./minecraft-creator-tools/LevelDb.js";
+export { default as LevelDb } from "./minecraft-creator-tools/LevelDb.js";
+export type * from "./minecraft-creator-tools/LevelDbIndex.js";
+export { default as LevelDbIndex } from "./minecraft-creator-tools/LevelDbIndex.js";
+export { default as LevelKeyValue } from "./minecraft-creator-tools/LevelKeyValue.js";
+export * from "./minecraft-creator-tools/Utilities.js";
+export { default as Utilities } from "./minecraft-creator-tools/Utilities.js";
+export { default as Varint } from "./minecraft-creator-tools/Varint.js";
+
 
 /** Extracts all LevelDB keys from a zipped `.mcworld` file. Also accepts the zipped "db" folder. */
 export async function readMcworld(mcworld: Blob): Promise<Map<string, LevelKeyValue>> {
