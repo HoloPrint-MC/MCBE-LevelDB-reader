@@ -1,5 +1,20 @@
 # mcbe-leveldb-reader
 
+## 4.0.0
+
+### Major Changes
+
+- 2c270ed: feat: Expose functions for creating a LevelDb instance without reading
+
+### Minor Changes
+
+- fb7b673: feat: Make logs be discarded if logging methods aren't present
+
+### Patch Changes
+
+- dbb9805: fix: Throw error when duplicate structure names exist in a world
+- f6d4a03: docs: Update README with badges for GitHub repo and docs site
+
 ## 3.1.1
 
 ### Patch Changes
