@@ -14,7 +14,6 @@ import {
 } from "./IErrorable.js";
 import IFile from "./IFile.js";
 import ILevelDbFileInfo from "./ILevelDbFileInfo.js";
-import INodeZlib from "./INodeZlib.js";
 import LevelDbIndex, {
 	ILevelDbFileIndex,
 	ILevelDbLogIndex
