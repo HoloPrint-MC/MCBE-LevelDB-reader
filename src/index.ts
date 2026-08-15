@@ -6,8 +6,10 @@ import {
 } from "@zip.js/zip.js";
 
 import type IFile from "./minecraft-creator-tools/IFile.js";
-import LevelDb, { ILogger } from "./minecraft-creator-tools/LevelDb.js";
+import type { ILogger } from "./minecraft-creator-tools/LevelDb.js";
+import LevelDb from "./minecraft-creator-tools/LevelDb.js";
 import LevelKeyValue from "./minecraft-creator-tools/LevelKeyValue.js";
+
 export { default as DataUtilities } from "./minecraft-creator-tools/DataUtilities.js";
 export type * from "./minecraft-creator-tools/IErrorable.js";
 export type { default as IFile } from "./minecraft-creator-tools/IFile.js";
@@ -117,6 +119,9 @@ export function extractStructureFilesFromLevelDbKeys(levelDbKeys: Map<string, Le
 		if(strKey.startsWith(structureKeyPrefix)) {
 			const namespacedStructureName = strKey.slice(structureKeyPrefix.length);
 			const structureName = removeDefaultNamespace && namespacedStructureName.startsWith(defaultNamespace)? namespacedStructureName.replace(defaultNamespace, "") : namespacedStructureName;
+			if(structures.has(structureName)) {
+				throw new Error(`Duplicate structure entries for ${structureName}`);
+			}
 			structures.set(structureName, new File([value.value as Uint8Array<ArrayBuffer>], structureName.replaceAll(":", "_") + ".mcstructure", {
 				type: "application/mcstructure"
 			}));
