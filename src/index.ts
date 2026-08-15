@@ -6,7 +6,7 @@ import {
 } from "@zip.js/zip.js";
 
 import type IFile from "./minecraft-creator-tools/IFile.js";
-import LevelDb from "./minecraft-creator-tools/LevelDb.js";
+import LevelDb, { ILogger } from "./minecraft-creator-tools/LevelDb.js";
 import LevelKeyValue from "./minecraft-creator-tools/LevelKeyValue.js";
 export { default as DataUtilities } from "./minecraft-creator-tools/DataUtilities.js";
 export type * from "./minecraft-creator-tools/IErrorable.js";
@@ -23,8 +23,8 @@ export { default as Utilities } from "./minecraft-creator-tools/Utilities.js";
 export { default as Varint } from "./minecraft-creator-tools/Varint.js";
 
 
-/** Extracts all LevelDB keys from a zipped `.mcworld` file. Also accepts the zipped "db" folder. */
-export async function readMcworld(mcworld: Blob): Promise<Map<string, LevelKeyValue>> {
+/** Unzips a `.mcworld` file and returns all the LevelDB files. Also accepts the zipped "db" folder. */
+export async function getLevelDbFilesFromMcworld(mcworld: Blob): Promise<File[]> {
 	const folder = new ZipReader(new BlobReader(mcworld));
 	const fileEntries = await folder.getEntries() as FileEntry[];
 	folder.close();
@@ -35,7 +35,17 @@ export async function readMcworld(mcworld: Blob): Promise<Map<string, LevelKeyVa
 	const dbRootPath = zipEntryDirname(currentEntry);
 	const dbEntries = fileEntries.filter(entry => !entry.directory && entry.filename.startsWith(dbRootPath) && isInternalLevelDbFile(zipEntryBasename(entry)));
 	const dbFiles = await Promise.all(dbEntries.map(entry => zipEntryToFile(entry)));
-	return await readLevelDb(dbFiles);
+	return dbFiles;
+}
+/** Extracts all LevelDB keys from a zipped `.mcworld` file. Also accepts the zipped "db" folder. */
+export async function readMcworld(mcworld: Blob, logger?: ILogger): Promise<Map<string, LevelKeyValue>> {
+	const levelDbFiles = await getLevelDbFilesFromMcworld(mcworld);
+	return await readLevelDb(levelDbFiles, logger);
+}
+/** Opens a LevelDB database from a zipped `.mcworld` file and returns an uninitialised LevelDB object. Also accepts the zipped "db" folder. You must call init() or initLazy() before accessing any entries. */
+export async function openMcworld(mcworld: Blob, logger?: ILogger): Promise<LevelDb> {
+	const levelDbFiles = await getLevelDbFilesFromMcworld(mcworld);
+	return await openLevelDb(levelDbFiles, logger);
 }
 
 /** Converts an Entry from zip.js into a File. */
@@ -51,11 +61,21 @@ export function zipEntryDirname(entry: FileEntry): string {
 	return entry.filename.includes("/")? entry.filename.slice(0, entry.filename.lastIndexOf("/") + 1) : "";
 }
 
+/** Checks if a file name looks like it is a relevant LevelDB file, i.e. if it starts with `MANIFEST`, or ends with `.ldb` or `.log`. */
 export function isInternalLevelDbFile(fileName: string) {
 	return fileName.startsWith("MANIFEST") || fileName.endsWith(".ldb") || fileName.endsWith(".log");
 }
 /** Reads a LevelDB database from all its files and returns an object with all keys. */
-export async function readLevelDb(dbFiles: Array<File>): Promise<Map<string, LevelKeyValue>> {
+export async function readLevelDb(dbFiles: File[], logger?: ILogger): Promise<Map<string, LevelKeyValue>> {
+	const levelDb = await openLevelDb(dbFiles, logger);
+	await levelDb.init({
+		unloadFilesAfterParse: true
+	});
+	const validKeys = new Map(Array.from(levelDb.keys.entries()).filter(([, val]) => val) as [string, LevelKeyValue][]);
+	return validKeys;
+}
+/** Opens a LevelDB database from all its files and returns an uninitialised `LevelDB` object. You must call `init()` or `initLazy()` before accessing any entries. */
+export async function openLevelDb(dbFiles: File[], logger?: ILogger): Promise<LevelDb> {
 	const files = await Promise.all(dbFiles.filter(file => isInternalLevelDbFile(file.name)).map(async file => {
 		const iFile: IFile = {
 			content: new Uint8Array(await file.arrayBuffer()),
@@ -83,15 +103,8 @@ export async function readLevelDb(dbFiles: Array<File>): Promise<Map<string, Lev
 			logFileArr.push(file);
 		}
 	});
-
-	const levelDb = new LevelDb(ldbFileArr, logFileArr, manifestFileArr, "LlamaStructureReader");
-	await levelDb.init(message => {
-		console.debug(`LevelDB: ${message}`);
-	}, {
-		unloadFilesAfterParse: true
-	});
-	const validKeys = new Map(Array.from(levelDb.keys.entries()).filter(([, val]) => val) as [string, LevelKeyValue][]);
-	return validKeys;
+	
+	return new LevelDb(ldbFileArr, logFileArr, manifestFileArr, "LlamaStructureReader", logger);
 }
 
 /** Helper to extract structure files from LevelDB keys object. */

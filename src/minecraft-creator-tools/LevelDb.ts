@@ -66,8 +66,10 @@ interface INodeZlib {
 
 /**
  * A logger which LevelDB will call. If a method isn't present, it won't log at all.
+ * To disable all logging, use an empty object `{}`.
  */
-export interface Logger {
+export interface ILogger {
+	log?(message: string): void
 	verbose?(message: string): void;
 	error?(message: string): void;
 	assert?(predicate: boolean): void;
@@ -84,7 +86,7 @@ export interface IChunkCoordinate {
 }
 
 export default class LevelDb implements IErrorable {
-	logger: Logger;
+	logger: ILogger;
 	ldbFiles: IFile[];
 	logFiles: IFile[];
 	manifestFiles: IFile[];
@@ -151,7 +153,7 @@ export default class LevelDb implements IErrorable {
 		}
 
 		if(typeof process === "undefined" || !process.versions?.node || typeof require !== "function") {
-			this.logger.verbose?.("[LevelDb] Native zlib unavailable; using pako inflate fallback.");
+			this.logger.verbose?.("Native zlib unavailable; using pako inflate fallback.");
 			LevelDb.#nodeZlib = false;
 			return undefined;
 		}
@@ -161,14 +163,14 @@ export default class LevelDb implements IErrorable {
 
 			if(typeof zlib.inflateRawSync === "function" && typeof zlib.inflateSync === "function") {
 				LevelDb.#nodeZlib = zlib as INodeZlib;
-				this.logger.verbose?.("[LevelDb] Native zlib found; using Node zlib for LevelDB inflate.");
+				this.logger.verbose?.("Native zlib found; using Node zlib for LevelDB inflate.");
 				return LevelDb.#nodeZlib;
 			}
 		} catch {
 			// Not running in Node, or zlib is unavailable in this runtime.
 		}
 
-		this.logger.verbose?.("[LevelDb] Native zlib not found; using pako inflate fallback.");
+		this.logger.verbose?.("Native zlib not found; using pako inflate fallback.");
 		LevelDb.#nodeZlib = false;
 		return undefined;
 	}
@@ -203,14 +205,15 @@ export default class LevelDb implements IErrorable {
 	/**
 	 * @param logger If provided, logs will go through here. If not present, it will default to console logs. To disable all logging, pass an empty object `{}`.
 	 */
-	public constructor(ldbFileArr: IFile[], logFileArr: IFile[], manifestFilesArr: IFile[], context?: string, logger?: Logger) {
+	public constructor(ldbFileArr: IFile[], logFileArr: IFile[], manifestFilesArr: IFile[], context?: string, logger?: ILogger) {
 		this.ldbFiles = ldbFileArr;
 		this.logFiles = logFileArr;
 		this.manifestFiles = manifestFilesArr;
 		this.context = context;
 		this.logger = logger ?? {
-			verbose: console.debug,
-			error: console.error,
+			log: message => console.log(`[LevelDb] ${message}`),
+			verbose: message => console.debug(`[LevelDb] ${message}`),
+			error: message => console.error(`[LevelDb] ${message}`),
 			assert: console.assert
 		};
 	}
@@ -240,7 +243,7 @@ export default class LevelDb implements IErrorable {
 		return message;
 	}
 
-	public async init(log?: (message: string) => Promise<void> | void, options?: { unloadFilesAfterParse?: boolean }) {
+	public async init(options?: { unloadFilesAfterParse?: boolean }) {
 		this.keys = new Map<string, LevelKeyValue | false | undefined>();
 		this.isInErrorState = false;
 		this.errorMessages = undefined;
@@ -252,10 +255,7 @@ export default class LevelDb implements IErrorable {
 
 			if(content instanceof Uint8Array && content.length > 0) {
 				this.parseManifestContent(content, this.manifestFiles[i].storageRelativePath);
-				if(log) {
-					await log("Loaded map manifest file '" + this.manifestFiles[i].fullPath + "'.");
-				}
-
+				this.logger.log?.("Loaded map manifest file '" + this.manifestFiles[i].fullPath + "'.");
 			}
 
 			// Unload file content to free memory after parsing
@@ -314,9 +314,7 @@ export default class LevelDb implements IErrorable {
 
 			if(content instanceof Uint8Array && content.length > 0) {
 				const kp = this.parseLdbContent(content, ldbFile.storageRelativePath);
-				if(log) {
-					await log("Loaded map record file '" + ldbFile.fullPath + "'. Records: " + kp);
-				}
+				this.logger.log?.("Loaded map record file '" + ldbFile.fullPath + "'. Records: " + kp);
 			}
 
 			// Unload file content to free memory after parsing
@@ -340,9 +338,7 @@ export default class LevelDb implements IErrorable {
 
 			if(content instanceof Uint8Array && content.length > 0) {
 				const kp = this.parseLogContent(content, logFilesSorted[i].storageRelativePath);
-				if(log) {
-					await log("Loaded map latest-updates file '" + logFilesSorted[i].fullPath + "'. Records: " + kp);
-				}
+				this.logger.log?.("Loaded map latest-updates file '" + logFilesSorted[i].fullPath + "'. Records: " + kp);
 			}
 
 			// Unload file content to free memory after parsing

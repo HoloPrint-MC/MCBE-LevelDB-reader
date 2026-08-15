@@ -32,3 +32,6 @@ const fileBuffer = await readFile("./hermitcraft9.mcworld");
 const levelDb = await readMcworld(fileBuffer);
 console.log(levelDb);
 ```
+
+## Changes from minecraft-creator-tools
+[Please see this file.](./src/minecraft-creator-tools/README.txt)

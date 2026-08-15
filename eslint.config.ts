@@ -8,7 +8,7 @@ import globals from "globals";
 import tseslint from "typescript-eslint";
 
 export default defineConfig([
-	{ ignores: ["dist/**/*", "node_modules/**/*", "src/LevelDb.js"] },
+	{ ignores: ["node_modules", "dist", "docs"] },
 	...tseslint.configs.recommended,
 	{
 		files: ["**/*.{js,ts,mjs,cjs}"],
